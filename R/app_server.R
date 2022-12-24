@@ -89,11 +89,11 @@ app_server <- function(input, output, session) {
     ),
     # hides the loading message
     shinyjs::hideElement(id = "load_message"),
-    tags$p(" 
-      The RTutor.ai website and the 
-      source code (CC BY-NC 3.0 license) are freely 
-      availble for academic and 
-      non-profit organizations only. 
+    tags$p("
+      The RTutor.ai website and the
+      source code (CC BY-NC 3.0 license) are freely
+      availble for academic and
+      non-profit organizations only.
       Commercial use beyond testing please contact ",
     a(
       "gexijin@gmail.com.",
@@ -170,12 +170,12 @@ app_server <- function(input, output, session) {
           ),
           column(
             width = 8,
-            p("This important parameter controls the AI's behavior in choosing 
-            among possible answers. A higher sampling temperature tells the AI 
-            to take more risks, producing more diverse and creative 
+            p("This important parameter controls the AI's behavior in choosing
+            among possible answers. A higher sampling temperature tells the AI
+            to take more risks, producing more diverse and creative
             solutions when the same request is repeated. A lower  temperature
              (such as 0) results in more
-             conservative and well-defined solutions, 
+             conservative and well-defined solutions,
              but less variety when repeated.
             "),
           )
@@ -183,7 +183,7 @@ app_server <- function(input, output, session) {
         hr(),
         h4("Use your own API key"),
         h5("We pay a small fee to use the AI for every request.
-           If you use this regularily, 
+           If you use this regularily,
            please take a few minutes to create your own API key: "),
 
         tags$ul(
@@ -198,11 +198,11 @@ app_server <- function(input, output, session) {
             tags$li("After logging in, click \"Personal\" from top right."),
             tags$li(
               "Click \"Manage Account\" and then \"Billing\",
-              where you can add \"Payment methods\" and set \"Usage 
+              where you can add \"Payment methods\" and set \"Usage
               limits\". $5 per month is more than enough."
             ),
             tags$li(
-              "Click \"API keys\" to create a new key, 
+              "Click \"API keys\" to create a new key,
               which can be copied and pasted it below."
             ),
         ),
@@ -234,16 +234,16 @@ app_server <- function(input, output, session) {
             actionButton("use_voice_button", strong("Seek mic permission"))
           )
         ),
-        h5("First select the checkbox and then seek 
-        permission to use the microphone. Your browser should have a popup 
-        window. Otherwise, check the both ends of the URL bar for a 
+        h5("First select the checkbox and then seek
+        permission to use the microphone. Your browser should have a popup
+        window. Otherwise, check the both ends of the URL bar for a
         blocked icon, which
-        could be clicked to grant permission. If successful, you will see 
+        could be clicked to grant permission. If successful, you will see
         a red dot on top of the tab in Chrome.
-        Voice naration can be used in both the Main and the 
-        Ask Me Anything tabs by just saying \"Hey Cox ...\" 
-        in honor of the statistician David Cox.     
-        If not satisfied, try again to overwrite. 
+        Voice naration can be used in both the Main and the
+        Ask Me Anything tabs by just saying \"Hey Cox ...\"
+        in honor of the statistician David Cox.
+        If not satisfied, try again to overwrite.
         To continue, say \"Hey Cox Continue ...\""),
       )
     )
@@ -403,7 +403,7 @@ app_server <- function(input, output, session) {
   output$session_api_source <- renderText({
     txt <- api_key_session()$api_key
 
-    # The following is essential for correctly getting the 
+    # The following is essential for correctly getting the
     # environment variable on Linux!!! Don't ask.
     tem <- Sys.getenv("OPEN_API_KEY")
 
@@ -433,7 +433,7 @@ app_server <- function(input, output, session) {
       ),
       tippy::tippy_this(
         elementId = "save_api_button",
-        tooltip = "Save to a local file, 
+        tooltip = "Save to a local file,
         so that you do not have to copy and paste next time.",
         theme = "light-border"
       )
@@ -532,7 +532,7 @@ app_server <- function(input, output, session) {
 
 
       error_api <- FALSE
-      # if error returns true, otherwise 
+      # if error returns true, otherwise
       #  that slot does not exist, returning false.
       # or be NULL
       error_api <- tryCatch(
@@ -594,10 +594,10 @@ app_server <- function(input, output, session) {
       title = "API connection error!",
       tags$h4("Is the API key is correct?", style = "color:red"),
       tags$h4("How about the WiFi?", style = "color:red"),
-      tags$h5("If you are on RTutor.ai, maybe Dr G's API usage 
+      tags$h5("If you are on RTutor.ai, maybe Dr G's API usage
       is more than he can affort this month.", style = "color:red"),
       tags$h4(
-        "Auto-reset ...", 
+        "Auto-reset ...",
         style = "color:blue; text-align:right"
       ),
       easyClose = TRUE,
@@ -630,8 +630,8 @@ app_server <- function(input, output, session) {
 
     })
 
-
-  output$openAI <- renderText({
+  # allow user to re-edit the code
+  output$openAI <- renderUI({
     req(openAI_response()$cmd)
     res <- openAI_response()$response$choices[1, 1]
     # Replace multiple newlines with just one.
@@ -640,7 +640,24 @@ app_server <- function(input, output, session) {
     res <- gsub("^[ ]{0, }\n", "", res)
     res <- gsub("```", "", res)
 
+    textAreaInput("ai_gen_code", "Edit the Code",
+                  value = res, width = "400px",
+                  rows = strsplit(res,"\n", fixed = TRUE) |>
+                                unlist() |> length())
   })
+
+
+
+  # output$openAI <- renderText({
+  #   req(openAI_response()$cmd)
+  #   res <- openAI_response()$response$choices[1, 1]
+  #   # Replace multiple newlines with just one.
+  #   res <- gsub("\n+", "\n", res)
+  #   # Replace emplty lines,  [ ]{0, }--> zero or more space
+  #   res <- gsub("^[ ]{0, }\n", "", res)
+  #   res <- gsub("```", "", res)
+  #
+  # })
 
 #output$code_out <- renderCode({
 #    req(openAI_response()$cmd)
@@ -663,8 +680,8 @@ app_server <- function(input, output, session) {
 
   output$total_cost <- renderText({
     if(input$submit_button == 0 & input$ask_button == 0) {
-      return("OpenAI charges 2¢ per 10k tokens/words 
-      from our account. Heavy users 
+      return("OpenAI charges 2¢ per 10k tokens/words
+      from our account. Heavy users
       please use your own account. See Settings."
       )
     } else {
@@ -696,7 +713,7 @@ app_server <- function(input, output, session) {
  # Defining & initializing the reactiveValues object
   counter <- reactiveValues(
     tokens = 0, # cummulative tokens
-    requests = 0, # cummulative requests    
+    requests = 0, # cummulative requests
     tokens_current = 0,  # tokens for current query
     time = 0 # response time for current
   )
@@ -714,11 +731,12 @@ app_server <- function(input, output, session) {
   # Sometimes returns NULL, even when code run fine. Especially when
   # a base R plot is generated.
   run_result <- reactive({
-    req(openAI_response()$cmd)
+    req(openAI_response()$cmd, input$ai_gen_code)
+
     withProgress(message = "Running the code ...", {
       incProgress(0.4)
       tryCatch(
-        eval(parse(text = openAI_response()$cmd)),
+        eval(parse(text = input$ai_gen_code)),
         error = function(e) {
           list(
             error_value = -1,
@@ -733,7 +751,7 @@ app_server <- function(input, output, session) {
 
   # just capture the screen output
   output$console_output <- renderText({
-    req(openAI_response()$cmd)
+    req(openAI_response()$cmd, input$ai_gen_code)
     out <- capture.output(
         eval(parse(text = openAI_response()$cmd))
     )
@@ -745,7 +763,7 @@ app_server <- function(input, output, session) {
       withProgress(message = "Plotting ...", {
         incProgress(0.4)
         tryCatch(
-          eval(parse(text = openAI_response()$cmd)),
+          eval(parse(text = input$ai_gen_code)),
           error = function(e) {
             list(
               value = -1,
@@ -758,7 +776,7 @@ app_server <- function(input, output, session) {
   })
 
   output$result_plotly <- plotly::renderPlotly({
-    req(openAI_response()$cmd)
+    req(openAI_response()$cmd, input$ai_gen_code)
     req(
       is_interactive_plot() ||   # natively interactive
       turned_on(input$make_ggplot_interactive)
@@ -766,7 +784,7 @@ app_server <- function(input, output, session) {
     withProgress(message = "Plotting ...", {
       incProgress(0.4)
       tryCatch(
-        g <- eval(parse(text = openAI_response()$cmd)),
+        g <- eval(parse(text = input$ai_gen_code)),
         error = function(e) {
           list(
             value = -1,
@@ -788,7 +806,7 @@ app_server <- function(input, output, session) {
 
   output$plot_ui <- renderUI({
     req(input$submit_button)
-    req(openAI_response()$cmd)
+    req(openAI_response()$cmd, input$ai_gen_code)
     if(code_error() || input$submit_button == 0) {
       return()
     } else if (
@@ -848,9 +866,9 @@ app_server <- function(input, output, session) {
       turned_on (input$make_ggplot_interactive)
      ) {
       tagList(
-        p("Interactive plot. Mouse over to see values. Select a region to zoom. 
-        Click on the legends to deselect a group. 
-        Double click a category to hide all others. 
+        p("Interactive plot. Mouse over to see values. Select a region to zoom.
+        Click on the legends to deselect a group.
+        Double click a category to hide all others.
         Use the menu on the top right for other functions."
         )
       )
@@ -867,7 +885,7 @@ app_server <- function(input, output, session) {
 
     error_status <- FALSE
 
-    # if error returns true, otherwise 
+    # if error returns true, otherwise
     #  that slot does not exist, returning false.
     # or be NULL
     try(  # if you do not 'try', the entire app quits! :-)
@@ -911,14 +929,14 @@ app_server <- function(input, output, session) {
     # otherwise built-in data is unavailable when running from R package.
     library(tidyverse)
 
-    
+
     if(input$select_data == uploaded_data) {
       eval(parse(text = paste0("df <- user_data()$df")))
     } else {
       eval(parse(text = paste0("df <- ", input$select_data)))
     }
     DT::datatable(
-      df, 
+      df,
       options = list(
         lengthMenu = c(5, 20, 50, 100),
         pageLength = 20,
@@ -960,10 +978,10 @@ app_server <- function(input, output, session) {
       Rmd_script <- paste0(
         Rmd_script,
         # Get the data from the params list-----------
-        "\n\nDeveloped by [Steven Ge](https://twitter.com/StevenXGe) using 
-        API access (via the 
+        "\n\nDeveloped by [Steven Ge](https://twitter.com/StevenXGe) using
+        API access (via the
         [openai](https://cran.rstudio.com/web/packages/openai/index.html)
-        package ) to 
+        package ) to
         [OpenAI's](https://cran.rstudio.com/web/packages/openai/index.html) \"",
         language_model,
         "\" model.",
@@ -1022,8 +1040,8 @@ app_server <- function(input, output, session) {
             "\n|",
             pre_text,
             "|",
-            "Use the ", 
-            input$select_data, 
+            "Use the ",
+            input$select_data,
             " data frame. "
           ),
           "",
@@ -1292,7 +1310,7 @@ output$answer <- renderText({
   req(input$ask_button)
 
   isolate({
-    req(input$ask_question) 
+    req(input$ask_question)
 
     #----------------------------Prep question
     txt <- input$ask_question
@@ -1302,7 +1320,7 @@ output$answer <- renderText({
       txt <- substr(txt, 1, 280)
     }
 
-    # If the last character is not a stop, add it. 
+    # If the last character is not a stop, add it.
     # Otherwise, GPT3 will add a sentence.
 
     # The following 5 lines were generated by ChatGPT!!!!!
@@ -1313,7 +1331,7 @@ output$answer <- renderText({
     }
 
     prepared_request <- paste(
-      "If the next question is not related to statistics or data science 
+      "If the next question is not related to statistics or data science
        say 'Statistics only!' ",
       txt
     )
@@ -1355,7 +1373,7 @@ output$answer <- renderText({
 
 
     error_api <- FALSE
-    # if error returns true, otherwise 
+    # if error returns true, otherwise
     #  that slot does not exist, returning false.
     # or be NULL
     error_api <- tryCatch(

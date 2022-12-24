@@ -90,7 +90,9 @@ fluidPage(
           value = "Main",
           h4("AI generated R code:"),
           #codeModules::codeOutput("code_out"),
-          verbatimTextOutput("openAI"),
+          #verbatimTextOutput("openAI"),
+          uiOutput("openAI"),
+          actionButton("re_rerun", strong("Re-Run")),
           uiOutput("error_message"),
           h4("Results:"),
 
@@ -187,15 +189,15 @@ fluidPage(
             " to translate natural language into R code, which is then excuted.",
             "You can request your analysis,
             just like asking a real person.",
-            "Upload a data file (CSV, TSV/tab-delimited text files, and Excel) 
-            and just analyze it in plain English. 
+            "Upload a data file (CSV, TSV/tab-delimited text files, and Excel)
+            and just analyze it in plain English.
             Your results can be downloaded as an HTML report in minutes!"
           ),
-          p("NO WARRANTY! Some of the scripts run but yield incorrect result. 
-          Please use the auto-generated code as a starting 
+          p("NO WARRANTY! Some of the scripts run but yield incorrect result.
+          Please use the auto-generated code as a starting
           point for further refinement and validation."),
 
-          p("OpenAI's models are accessed via API, which is not free. 
+          p("OpenAI's models are accessed via API, which is not free.
           Please do not abuse it. Otherwise, this service might disappear."),
 
           hr(),
@@ -215,7 +217,7 @@ fluidPage(
               "GitHub,",
               href = "https://github.com/gexijin/RTutor"
             ),
-            " from where you can also find 
+            " from where you can also find
             instruction to install RTutor as an R package."
           ),
           hr(),
@@ -270,64 +272,64 @@ fluidPage(
           h4("Frequently asked questions:"),
 
           h5("1.	What is RTutor?"),
-          p("It is an artificial intelligence (AI)-based app that enables 
+          p("It is an artificial intelligence (AI)-based app that enables
           users to interact with your data via natural language.
-           After uploading a 
-          dataset, users ask questions about or request analyses in 
-          English. The app generates and runs R code to answer that question 
+           After uploading a
+          dataset, users ask questions about or request analyses in
+          English. The app generates and runs R code to answer that question
           with plots and numeric results."),
 
           h5("2.	How does RTutor work?"),
           p("The requests are structured and sent to OpenAI’s AI
-           system, which returns R code. The R code is cleaned up and 
-           executed in a Shiny 
-           environment, showing results or error messages. Multiple 
+           system, which returns R code. The R code is cleaned up and
+           executed in a Shiny
+           environment, showing results or error messages. Multiple
            requests are logged to produce an R Markdown file, which can be
-            knitted into an HTML report. This enables record keeping 
+            knitted into an HTML report. This enables record keeping
             and reproducibility."),
 
           h5("3.	Can people without R coding experience use RTutor for statistical analysis? "),
           p("Not entirely. This is because the generated code can be wrong.
-           However, it could be used to quickly conduct data 
-           visualization, and exploratory data analysis (EDA). 
+           However, it could be used to quickly conduct data
+           visualization, and exploratory data analysis (EDA).
            Just be mindful of this experimental technology. "),
 
           h5("4.	Who is it for?"),
           p("The primary goal is to help people with some R experience to learn
-           R or be more productive. RTutor can be used to quickly speed up the 
-           coding process using R. It gives you a draft code to test and 
+           R or be more productive. RTutor can be used to quickly speed up the
+           coding process using R. It gives you a draft code to test and
            refine. Be wary of bugs and errors. "),
 
           h5("5.	How do you make sure the results are correct? "),
-          p("Try to word your question differently. And try 
-          the same request several time. A higher temperature parameter will give 
-          diverse choices. Then users can double-check to see 
+          p("Try to word your question differently. And try
+          the same request several time. A higher temperature parameter will give
+          diverse choices. Then users can double-check to see
           if you get the same results from different runs."),
 
           h5("6.	Can you use RTutor to do R coding homework?"),
           p("No. That will defy the purpose. You need to learn
-           R coding properly to be able to tell if the generated 
+           R coding properly to be able to tell if the generated
            R coding is correct.  "),
 
           h5("7.	Can private companies use RTutor? "),
-          p("No. It can be tried as a demo. RTutor website 
+          p("No. It can be tried as a demo. RTutor website
           dnd source code are freely available for non-profit organizations
            only and distributed using the CC NC 3.0 license."),
 
           h5("8.	Can you run RTutor locally?"),
-          p("Yes. Download the R package and install it locally. 
+          p("Yes. Download the R package and install it locally.
           Then you need to obtain an API key from OpenAI."),
 
           h5("9.	Why do I get different results with the same request? "),
-          p("OpenAI’s language model has a certain degree of randomness 
-          that could be adjusted by parameters called \"temperature\". 
+          p("OpenAI’s language model has a certain degree of randomness
+          that could be adjusted by parameters called \"temperature\".
           Set this in  Settings"),
 
           h5("10.	How much does the OpenAI’s cost per session?"),
           p("About $0.01 to $0.1, if you send 10 to 50 requests. We have a
            monthly usage limit. Once that is exceeded, the website will
-            not work for the month. If you use it regularly, please use 
-            your API key. Currently, RTutor receives no funding. 
+            not work for the month. If you use it regularly, please use
+            your API key. Currently, RTutor receives no funding.
             We might ask users to contribute later.
             "),
 
@@ -335,22 +337,22 @@ fluidPage(
           p("No. But RTutor can make them more efficient."),
 
           h5("12.	How do I effectively write my request?"),
-          p("Imagine you have a summer intern, a collge student 
-          who took one semester of statistics and R. You send the 
-          intern emails with instructions and he/she sends 
-          back code and results. The intern is not experienced, 
+          p("Imagine you have a summer intern, a collge student
+          who took one semester of statistics and R. You send the
+          intern emails with instructions and he/she sends
+          back code and results. The intern is not experienced,
           thus error-prone, but is hard working. Thanks to AI, this
            intern is lightning fast and nearly free."),
 
            h5("13. Can I install R package in the AI generated code?"),
            p("No. But we are working to pre-install all the R
-            packages on the server! Right now we finished the top 5000 most 
+            packages on the server! Right now we finished the top 5000 most
             frequently used R packages. Chances are that your favorite package
             is already installed."),
 
            h5("14. Can I upload big files to the site?"),
-           p("Not if it is more than 10MB. Try to get a small portion of your data. 
-           Upload it to the site to get the code, which can be run locally on your 
+           p("Not if it is more than 10MB. Try to get a small portion of your data.
+           Upload it to the site to get the code, which can be run locally on your
            laptop. Alternatively, download RTutor R package, and use it from your
            own computer."),
 
@@ -360,10 +362,10 @@ fluidPage(
 
            h5("16. Voice input does not work!"),
            p("The voice input feature is still glitchy. One of the main reason
-           is that most browsers block the RTutor.ai site from accessing microphone, 
+           is that most browsers block the RTutor.ai site from accessing microphone,
            probably due to its use of http, not https. We are working on this.
-           Check if you can allow microphone access. 
-           Speak closer to the mic. Make sure there 
+           Check if you can allow microphone access.
+           Speak closer to the mic. Make sure there
            is only one browser tab using the mic. "),
 
            hr(),
