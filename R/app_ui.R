@@ -6,24 +6,27 @@
 #' @noRd
 app_ui <- function(request) {
 fluidPage(
-  titlePanel("RTutor.ai - Talk to your data via AI"),
+  titlePanel("RTutor - Talk to your data via AI"),
   windowTitle = "RTutor",
-  uiOutput("use_heyshiny"),
-
+  
+  heyshiny::useHeyshiny(language = "en-US"), # configure the heyshiny package
+  heyshiny::speechInput(
+    inputId = "hey_cmd",
+    command = "hey cox *msg"  # hey cox is more sensitive than 'hi tutor'
+  ), # set the input
 
   # Sidebar with a slider input for number of bins
   sidebarLayout(
     sidebarPanel(
       uiOutput("timer_ui"),
-      textOutput("selected_dataset"),      
       p(HTML("<div align=\"right\"> <A HREF=\"javascript:history.go(0)\">Reset</A></div>")),
       fluidRow(
         column(
-          width = 5,
+          width = 4,
           uiOutput("demo_data_ui")
         ),
         column(
-          width = 7,
+          width = 8,
           uiOutput("data_upload_ui")
         )
       ),
@@ -56,6 +59,12 @@ fluidPage(
           textOutput("retry_on_error"),
         )
       ),
+
+
+      br(), br(),
+      textOutput("usage"),
+      textOutput("total_cost"),
+      textOutput("temperature"),
       br(),
       fluidRow(
         column(
@@ -67,10 +76,6 @@ fluidPage(
           actionButton("api_button", "Settings")
         )
       ),
-      br(),
-      textOutput("usage"),
-      textOutput("total_cost"),
-      textOutput("temperature"),
       uiOutput("slava_ukraini")
     ),
 
@@ -79,7 +84,7 @@ fluidPage(
 ###############################################################################
 
     mainPanel(
-      shinyjs::useShinyjs(),
+
       tabsetPanel(
         id = "tabs",
         tabPanel(
@@ -93,21 +98,10 @@ fluidPage(
 
           # shows error message in local machine, but not on the server
           verbatimTextOutput("console_output"),
-          checkboxInput(
-            inputId = "make_ggplot_interactive",
-            label = NULL,
-            value = FALSE
-          ),
           uiOutput("plot_ui"),
-          br(),
-          uiOutput("tips_interactive"),
           hr(),
-          DT::dataTableOutput("data_table_DT"),
+          DT::dataTableOutput("data_table_DT")
           #,tableOutput("data_table")
-          div(
-            id = "load_message",
-            h1("Loading R packages... ... ...")
-          ),
         ),
 
         tabPanel(
@@ -174,7 +168,7 @@ fluidPage(
         tabPanel(
           title = "About",
           value = "About",
-          h4("RTutor Version 0.4"),
+          h4("RTutor Version 0.3"),
           p("RTutor uses ",
             a(
               "OpenAI's",
@@ -221,9 +215,6 @@ fluidPage(
           hr(),
           h4("Update log:"),
           tags$ul(
-            tags$li(
-              "v 0.4 12/23/2022. Interactive plot. Voice input optional."
-            ),
             tags$li(
               "v0.3 12/20/2022. Add voice recognition."
             ),
