@@ -641,7 +641,7 @@ app_server <- function(input, output, session) {
     res <- gsub("```", "", res)
 
     textAreaInput("ai_gen_code", "Edit the Code",
-                  value = res, width = "400px",
+                  value = res, width = "600px",
                   rows = strsplit(res,"\n", fixed = TRUE) |>
                                 unlist() |> length())
   })
