@@ -64,6 +64,10 @@ app_server <- function(input, output, session) {
     tags$p(
       "No guarantee for the correctness of the generated code."
     ),
+
+    # hides the loading message
+    shinyjs::hideElement(id = "load_message"),
+
     tags$p("
       The RTutor.ai website and the
       source code (CC BY-NC 3.0 license) are freely
@@ -151,7 +155,7 @@ app_server <- function(input, output, session) {
             a lower sampling temperature (such as 0) results in more
              conservative and well-defined solutions,
              but less variety when the same
-            request is repeated..
+            request is repeated.
             "),
           )
         ),
@@ -192,8 +196,8 @@ app_server <- function(input, output, session) {
         uiOutput("save_api_ui"),
         hr(),
         textOutput("session_api_source")
-      )
-    )
+
+    ))
   })
 
   # uploaded data
@@ -560,8 +564,8 @@ app_server <- function(input, output, session) {
 
     })
 
-
-  output$openAI <- renderText({
+  # allow user to re-edit the code
+  output$openAI <- renderUI({
     req(openAI_response()$cmd)
 
     res <- openAI_response()$response$choices[1, 1]
@@ -571,7 +575,53 @@ app_server <- function(input, output, session) {
     res <- gsub("^[ ]{0, }\n", "", res)
     res <- gsub("```", "", res)
 
+    textAreaInput("ai_gen_code", "Edit the Code",
+                  value = res, width = "400px",
+                  rows = strsplit(res,"\n", fixed = TRUE) |>
+                                unlist() |> length())
   })
+
+
+ # Defining & initializing the reactiveValues object
+  r_code <- reactiveValues(
+    code = "", # cumulative code
+    raw = "",  # cumulative orginal code for print out
+    cmd = "" # last code for Rmarkdown
+  )
+
+  observeEvent(input$submit_button, {
+    # if not continue
+    if(!input$continue) {
+      r_code$code <- openAI_response()$cmd
+      r_code$raw <- openAI_response()$response$choices[1, 1]
+      r_code$cmd <- ""
+
+    } else { # if continue
+      r_code$cmd <- r_code$code  # last code
+      r_code$code <- c(r_code$code, openAI_response()$cmd)
+      r_code$raw <- paste(r_code$raw, openAI_response()$response$choices[1, 1])
+    }
+
+    updateCheckboxInput(
+      session = session,
+      inputId = "continue",
+      label = "Continue",
+      value = FALSE
+    )
+  })
+
+
+  # output$openAI <- renderText({
+  #   req(openAI_response()$cmd)
+  #   res <- openAI_response()$response$choices[1, 1]
+  #   # Replace multiple newlines with just one.
+  #   res <- gsub("\n+", "\n", res)
+  #   # Replace emplty lines,  [ ]{0, }--> zero or more space
+  #   res <- gsub("^[ ]{0, }\n", "", res)
+  #   res <- gsub("```", "", res)
+  #
+  # })
+
 
 #output$code_out <- renderCode({
 #    req(openAI_response()$cmd)
@@ -645,6 +695,7 @@ app_server <- function(input, output, session) {
   # Sometimes returns NULL, even when code run fine. Especially when
   # a base R plot is generated.
   run_result <- reactive({
+
     req(openAI_response()$cmd)
 
     tryCatch(
@@ -662,7 +713,7 @@ app_server <- function(input, output, session) {
 
   # just capture the screen output
   output$console_output <- renderText({
-    req(openAI_response()$cmd)
+    req(openAI_response()$cmd, input$ai_gen_code)
     out <- capture.output(
         eval(parse(text = openAI_response()$cmd))
     )
@@ -680,6 +731,7 @@ app_server <- function(input, output, session) {
           message = capture.output(print(e$message)),
           error_status = TRUE
         )
+
       }
     )
 
@@ -687,7 +739,7 @@ app_server <- function(input, output, session) {
 
   output$plot_ui <- renderUI({
     req(input$submit_button)
-    req(openAI_response()$cmd)
+    req(openAI_response()$cmd, input$ai_gen_code)
     if(code_error() || input$submit_button == 0) {
       return()
     } else {
@@ -695,6 +747,7 @@ app_server <- function(input, output, session) {
     }
 
   })
+
 
   # Error when run the generated code?
   code_error <- reactive({
