@@ -1,11 +1,3 @@
-###################################################
-# RTutor.AI, a Shiny app for chating with your data
-# Author: Xijin Ge    gexijin@gmail.com
-# Dec. 6-12, 2022.
-# No warranty and not for commercial use.
-###################################################
-
-
 #' The application User-Interface
 #'
 #' @param request Internal parameter for `{shiny}`.
@@ -16,25 +8,25 @@ app_ui <- function(request) {
 fluidPage(
   titlePanel("RTutor - Talk to your data via AI"),
   windowTitle = "RTutor",
-  uiOutput("use_heyshiny"),
+  
+  heyshiny::useHeyshiny(language = "en-US"), # configure the heyshiny package
+  heyshiny::speechInput(
+    inputId = "hey_cmd",
+    command = "hey cox *msg"  # hey cox is more sensitive than 'hi tutor'
+  ), # set the input
 
-  div(
-    id = "load_message",
-    h1("Loading ... ...")
-  ),
   # Sidebar with a slider input for number of bins
   sidebarLayout(
     sidebarPanel(
       uiOutput("timer_ui"),
-      textOutput("selected_dataset"),
       p(HTML("<div align=\"right\"> <A HREF=\"javascript:history.go(0)\">Reset</A></div>")),
       fluidRow(
         column(
-          width = 6,
+          width = 4,
           uiOutput("demo_data_ui")
         ),
         column(
-          width = 6,
+          width = 8,
           uiOutput("data_upload_ui")
         )
       ),
@@ -51,7 +43,7 @@ fluidPage(
       br(), br(),
       fluidRow(
         column(
-          width = 6,
+          width = 4,
           actionButton("submit_button", strong("Submit")),
           tags$head(tags$style(
             "#submit_button{font-size: 16px;color: red}"
@@ -63,19 +55,16 @@ fluidPage(
           )
         ),
         column(
-          width = 6,
-          checkboxInput(
-            inputId = "continue",
-            label = "Continue",
-            value = FALSE
-          ),
-          tippy::tippy_this(
-            "continue",
-            "If selected, the current R scripts will be kept in the next questions. We build upon this script.",
-            theme = "light-border"
-          )
+          width = 8,
+          textOutput("retry_on_error"),
         )
       ),
+
+
+      br(), br(),
+      textOutput("usage"),
+      textOutput("total_cost"),
+      textOutput("temperature"),
       br(),
       fluidRow(
         column(
@@ -87,11 +76,6 @@ fluidPage(
           actionButton("api_button", "Settings")
         )
       ),
-      br(),
-      textOutput("retry_on_error"),
-      textOutput("usage"),
-      textOutput("total_cost"),
-      textOutput("temperature"),
       uiOutput("slava_ukraini")
     ),
 
@@ -100,7 +84,7 @@ fluidPage(
 ###############################################################################
 
     mainPanel(
-      shinyjs::useShinyjs(),
+
       tabsetPanel(
         id = "tabs",
         tabPanel(
@@ -114,18 +98,10 @@ fluidPage(
 
           # shows error message in local machine, but not on the server
           verbatimTextOutput("console_output"),
-          checkboxInput(
-            inputId = "make_ggplot_interactive",
-            label = NULL,
-            value = FALSE
-          ),
           uiOutput("plot_ui"),
-          br(),
-          uiOutput("tips_interactive"),
           hr(),
           DT::dataTableOutput("data_table_DT")
           #,tableOutput("data_table")
-
         ),
 
         tabPanel(
@@ -192,7 +168,7 @@ fluidPage(
         tabPanel(
           title = "About",
           value = "About",
-          h4("RTutor Version 0.5"),
+          h4("RTutor Version 0.3"),
           p("RTutor uses ",
             a(
               "OpenAI's",
@@ -239,12 +215,6 @@ fluidPage(
           hr(),
           h4("Update log:"),
           tags$ul(
-            tags$li(
-              "v 0.5 12/24/2022. Keep current code and continue."
-            ),
-            tags$li(
-              "v 0.4 12/23/2022. Interactive plot. Voice input optional."
-            ),
             tags$li(
               "v0.3 12/20/2022. Add voice recognition."
             ),
@@ -355,9 +325,8 @@ fluidPage(
           h5("11.	Can this replace statisticians or data scientists?"),
           p("No. But RTutor can make them more efficient."),
 
-          h5("12.	How do I  write my request effectively?"),
-          p("Imagine you have a summer intern, 
-          a collge student 
+          h5("12.	How do I effectively write my request?"),
+          p("Imagine you have a summer intern, a collge student 
           who took one semester of statistics and R. You send the 
           intern emails with instructions and he/she sends 
           back code and results. The intern is not experienced, 
@@ -376,24 +345,15 @@ fluidPage(
            laptop. Alternatively, download RTutor R package, and use it from your
            own computer."),
 
-           h5("15. The server is busy. Or the website is stuck!"),
+           h5("15. The server is busy. What do I do?"),
            p("Start a new browser window, not another tab. You will be assigned
-           to a new worker process. You can also try our mirror site ",
-           a(
-             "https://bcloud.org.",
-             href = "https://bcloud.org"
-           )
-           ),
+           to a new worker process."),
 
            h5("16. Voice input does not work!"),
-           p("One of the main reason
-           is that your browser block the website site from accessing the microphone. 
-           Make sure you access the site using",
-           a(
-             "https://RTutor.ai.",
-             href = "https://RTutor.ai"
-           ),
-           "With http, mic access is automatically blocked in Chrome.
+           p("The voice input feature is still glitchy. One of the main reason
+           is that most browsers block the RTutor.ai site from accessing microphone, 
+           probably due to its use of http, not https. We are working on this.
+           Check if you can allow microphone access. 
            Speak closer to the mic. Make sure there 
            is only one browser tab using the mic. "),
 

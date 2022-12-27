@@ -1,10 +1,3 @@
-###################################################
-# RTutor.AI, a Shiny app for chating with your data
-# Author: Xijin Ge    gexijin@gmail.com
-# Dec. 6-12, 2022.
-# No warranty and not for commercial use.
-###################################################
-
 #' The application server-side
 #'
 #' @param input,output,session Internal parameters for {shiny}.
@@ -26,7 +19,7 @@ app_server <- function(input, output, session) {
   observe({
     req(input$demo_prompt)
     req(input$select_data)
-    if(input$demo_prompt != demos_mpg[1]) {
+    if(input$select_data == "mpg" && input$demo_prompt != demos[1]) {
       updateTextInput(
         session,
         "input_text",
@@ -38,7 +31,7 @@ app_server <- function(input, output, session) {
         "input_text",
         value = "",
         placeholder =
-"Upload a file or use demo data. Then just ask questions or request analyses in plain English. See examples above. For different solutions, try again with the same request. Code works correctly some of the times. To use voice input, click Settings."
+"Upload data, or use demo. Then just ask questions or request analyses in plain English. See examples above. To see different answers, try again with the same request. Increase \"temperature\" for variety. Code works correctly some of the times. To use voice input, allow microphone access and say \"Hey Cox ...\""
       )
     }
   })
@@ -66,41 +59,16 @@ app_server <- function(input, output, session) {
     )
   })
 
-  # had to use this. Otherwise, the checkbox returns to false
-  # when the popup is closed and openned again.
-  use_voice <- reactive({
-      use_voice <- FALSE #default
-      tem <- is.null(input$use_voice_button)
-      if(!is.null(input$use_voice)) {
-        use_voice <- input$use_voice
-      }
-      return(use_voice)
-  })
-
-  # Use voice input?
-  output$use_heyshiny <- renderUI({
-    req(use_voice())
-      tagList(
-        heyshiny::useHeyshiny(language = "en-US"), # configure the heyshiny package
-        heyshiny::speechInput(
-          inputId = "hey_cmd",
-          command = "hey cox *msg"  # hey cox is more sensitive than 'hi tutor'
-        ), # set the input
-      )
-  })
-
   welcome_modal <- shiny::modalDialog(
     title = "Terms & Conditions",
     tags$p(
       "No guarantee for the correctness of the generated code."
     ),
-    # hides the loading message
-    shinyjs::hideElement(id = "load_message"),
-    tags$p(" 
-      The RTutor.ai website and the 
-      source code (CC BY-NC 3.0 license) are freely 
-      availble for academic and 
-      non-profit organizations only. 
+    tags$p("
+      The RTutor.ai website and the
+      source code (CC BY-NC 3.0 license) are freely
+      availble for academic and
+      non-profit organizations only.
       Commercial use beyond testing please contact ",
     a(
       "gexijin@gmail.com.",
@@ -113,7 +81,6 @@ app_server <- function(input, output, session) {
   )
 
   shiny::showModal(welcome_modal)
-
 
    # read the speech input
   observeEvent(input$hey_cmd, {
@@ -177,20 +144,21 @@ app_server <- function(input, output, session) {
           ),
           column(
             width = 8,
-            p("This important parameter controls the AI's behavior in choosing 
-            among possible answers. A higher sampling temperature tells the AI 
-            to take more risks, producing more diverse and creative 
-            solutions when the same request is repeated. A lower  temperature
-             (such as 0) results in more
-             conservative and well-defined solutions, 
-             but less variety when repeated.
+            p("This important parameter controls the AI's behavior in choosing
+            among possible answers. A higher sampling temperature tells the AI
+            to take more risks, which can produce more diverse and creative
+            solutions when the same request is repeated. On the other hand,
+            a lower sampling temperature (such as 0) results in more
+             conservative and well-defined solutions,
+             but less variety when the same
+            request is repeated..
             "),
           )
         ),
         hr(),
         h4("Use your own API key"),
         h5("We pay a small fee to use the AI for every request.
-           If you use this regularily, 
+           If you use this regularily,
            please take a few minutes to create your own API key: "),
 
         tags$ul(
@@ -205,53 +173,25 @@ app_server <- function(input, output, session) {
             tags$li("After logging in, click \"Personal\" from top right."),
             tags$li(
               "Click \"Manage Account\" and then \"Billing\",
-              where you can add \"Payment methods\" and set \"Usage 
+              where you can add \"Payment methods\" and set \"Usage
               limits\". $5 per month is more than enough."
             ),
             tags$li(
-              "Click \"API keys\" to create a new key, 
+              "Click \"API keys\" to create a new key,
               which can be copied and pasted it below."
             ),
         ),
         textInput(
           inputId = "api_key",
-          label = h5("Paste your API key from OpenAI:"),
+          label = "Paste your API key from OpenAI:",
           value = NULL,
           placeholder = "sk-..... (51 characters)"
         ),
         uiOutput("valid_key"),
+        br(),
         uiOutput("save_api_ui"),
-        verbatimTextOutput("session_api_source"),
         hr(),
-
-        fluidRow(
-          column(
-            width = 6,
-            checkboxInput(
-              inputId = "use_voice",
-              label = strong("Enable voice narration"),
-              value = use_voice()
-            )
-          ),
-          column(
-            width = 6,
-            # this causes the use_voice() to refresh twice,
-            # triggering the permission seeking in Chrome.
-            # Don't know why, but this works. I'm a stable genius.
-            actionButton("use_voice_button", strong("Seek mic permission"))
-          )
-        ),
-        h5("First select the checkbox and then seek 
-        permission to use the microphone. Your browser should have a popup 
-        window. Otherwise, check the both ends of the URL bar for a 
-        blocked icon, which
-        could be clicked to grant permission. If successful, you will see 
-        a red dot on top of the tab in Chrome.
-        Voice naration can be used in both the Main and the 
-        Ask Me Anything tabs by just saying \"Hey Cox ...\" 
-        in honor of the statistician David Cox.     
-        If not satisfied, try again to overwrite. 
-        To continue, say \"Hey Cox Continue ...\""),
+        textOutput("session_api_source")
       )
     )
   })
@@ -292,25 +232,6 @@ app_server <- function(input, output, session) {
     })
   })
 
-
-  # showing the current dataset. Warning if no is uploaded.
-  output$selected_dataset <- renderText({
-      req(input$submit_button)
-      # when submit is clicked, but no data is uploaded.
-
-      if(input$select_data == uploaded_data) {
-        if(is.null(input$user_file)) {
-          txt <- "No file uploaded! Please Reset and upload your data first."
-        } else {
-          txt <- "Dataset: uploaded."
-        }
-      } else {
-        txt <- paste0("Dataset: ", input$select_data, ". To switch, click Reset.")
-      }
-
-      return(txt)
-  })
-
   output$data_upload_ui <- renderUI({
 
     # Hide this input box after the first run.
@@ -318,7 +239,7 @@ app_server <- function(input, output, session) {
 
     fileInput(
       inputId = "user_file",
-      label = "File Upload",
+      label = "Upload a file",
       accept = c(
         "text/csv",
         "text/comma-separated-values",
@@ -340,7 +261,7 @@ app_server <- function(input, output, session) {
 
     selectInput(
       inputId = "select_data",
-      label = "Data",
+      label = "Demo data",
       choices = datasets,
       selected = "mpg",
       multiple = FALSE,
@@ -359,22 +280,9 @@ app_server <- function(input, output, session) {
     if (input$select_data == "mpg") {
       selectInput(
         inputId = "demo_prompt",
-        choices = demos_mpg,
+        choices = demos,
         label = "Example requests:"
       )
-    } else if (input$select_data == no_data) {
-      selectInput(
-        inputId = "demo_prompt",
-        choices = demos_no_data,
-        label = "Example requests:"
-      )
-    } else if (input$select_data == "diamonds") {
-      selectInput(
-        inputId = "demo_prompt",
-        choices = demos_diamond,
-        label = "Example requests:"
-      )
-
     } else {
       return(NULL)
     }
@@ -383,6 +291,14 @@ app_server <- function(input, output, session) {
   output$slava_ukraini <- renderUI({
     if(input$submit_button == 0 && input$ask_button == 0) {
       tagList(
+        hr(),
+        h5("To use your voice, just say \"Hey Cox ...\" after
+        allowing microphone access (often blocked by browser).
+        This is in honor of the statistician Dr. David Cox.
+        Make sure there is only one tab
+        using the microphone.
+        If not satisfied, try again; the old text will
+        be overwritten. To continue, say \"Hey Cox Continue ...\""),
         br(),
         h4("Slava Ukraini!")
       )
@@ -423,7 +339,7 @@ app_server <- function(input, output, session) {
   output$session_api_source <- renderText({
     txt <- api_key_session()$api_key
 
-    # The following is essential for correctly getting the 
+    # The following is essential for correctly getting the
     # environment variable on Linux!!! Don't ask.
     tem <- Sys.getenv("OPEN_API_KEY")
 
@@ -453,7 +369,7 @@ app_server <- function(input, output, session) {
       ),
       tippy::tippy_this(
         elementId = "save_api_button",
-        tooltip = "Save to a local file, 
+        tooltip = "Save to a local file,
         so that you do not have to copy and paste next time.",
         theme = "light-border"
       )
@@ -505,16 +421,11 @@ app_server <- function(input, output, session) {
   openAI_response <- reactive({
 
     req(input$submit_button)
-
+    #browser()
     isolate({  # so that it will not responde to text, until submitted
       req(input$input_text)
       prepared_request <- openAI_prompt()
       req(prepared_request)
-
-      # when submit is clicked, but no data is uploaded.
-      if(input$select_data == uploaded_data) {
-        req(user_data())
-      }
 
       shinybusy::show_modal_spinner(
         spin = "orbit",
@@ -528,8 +439,8 @@ app_server <- function(input, output, session) {
 
       # Send to openAI
       tryCatch(
-        response <- openai::create_completion(
-          engine_id = language_model,
+        response = openai::create_completion(
+          model = language_model,
           prompt = prepared_request,
           openai_api_key = api_key_session()$api_key,
           max_tokens = 500,
@@ -550,9 +461,8 @@ app_server <- function(input, output, session) {
         }
       )
 
-
       error_api <- FALSE
-      # if error returns true, otherwise 
+      # if error returns true, otherwise
       #  that slot does not exist, returning false.
       # or be NULL
       error_api <- tryCatch(
@@ -614,10 +524,10 @@ app_server <- function(input, output, session) {
       title = "API connection error!",
       tags$h4("Is the API key is correct?", style = "color:red"),
       tags$h4("How about the WiFi?", style = "color:red"),
-      tags$h5("If you are on RTutor.ai, maybe Dr G's API usage 
+      tags$h5("If you are on RTutor.ai, maybe Dr G's API usage
       is more than he can affort this month.", style = "color:red"),
       tags$h4(
-        "Auto-reset ...", 
+        "Auto-reset ...",
         style = "color:blue; text-align:right"
       ),
       easyClose = TRUE,
@@ -653,7 +563,8 @@ app_server <- function(input, output, session) {
 
   output$openAI <- renderText({
     req(openAI_response()$cmd)
-    res <- r_code$raw
+
+    res <- openAI_response()$response$choices[1, 1]
     # Replace multiple newlines with just one.
     res <- gsub("\n+", "\n", res)
     # Replace emplty lines,  [ ]{0, }--> zero or more space
@@ -661,36 +572,6 @@ app_server <- function(input, output, session) {
     res <- gsub("```", "", res)
 
   })
-
- # Defining & initializing the reactiveValues object
-  r_code <- reactiveValues(
-    code = "", # cumulative code
-    raw = "",  # cumulative orginal code for print out
-    cmd = "" # last code for Rmarkdown
-  )
-
-  observeEvent(input$submit_button, {
-    # if not continue
-    if(!input$continue) {
-      r_code$code <- openAI_response()$cmd
-      r_code$raw <- openAI_response()$response$choices[1, 1]
-      r_code$cmd <- ""
-      
-    } else { # if continue
-      r_code$cmd <- r_code$code  # last code
-      r_code$code <- c(r_code$code, openAI_response()$cmd)
-      r_code$raw <- paste(r_code$raw, openAI_response()$response$choices[1, 1])
-    }
-
-    updateCheckboxInput(
-      session = session,
-      inputId = "continue",
-      label = "Continue",
-      value = FALSE
-    )
-  })
-
-
 
 #output$code_out <- renderCode({
 #    req(openAI_response()$cmd)
@@ -713,9 +594,9 @@ app_server <- function(input, output, session) {
 
   output$total_cost <- renderText({
     if(input$submit_button == 0 & input$ask_button == 0) {
-      return("OpenAI charges 2¢ per 10k tokens/words 
-      from our account. Heavy users 
-      please use your own account. See Settings."
+      return("OpenAI charges 2¢ per 10k tokens/words
+      from our account. Heavy users
+      please use your own account (below)."
       )
     } else {
     #req(openAI_response()$cmd)
@@ -739,14 +620,14 @@ app_server <- function(input, output, session) {
    output$retry_on_error <- renderText({
      req(code_error())
      if(code_error()) {
-      "Error! Try again or change request."
+      "Error! Click Re-submit or try the code on a local computer."
      }
 
    })
  # Defining & initializing the reactiveValues object
   counter <- reactiveValues(
     tokens = 0, # cummulative tokens
-    requests = 0, # cummulative requests    
+    requests = 0, # cummulative requests
     tokens_current = 0,  # tokens for current query
     time = 0 # response time for current
   )
@@ -765,19 +646,17 @@ app_server <- function(input, output, session) {
   # a base R plot is generated.
   run_result <- reactive({
     req(openAI_response()$cmd)
-    withProgress(message = "Running the code ...", {
-      incProgress(0.4)
-      tryCatch(
-        eval(parse(text = r_code$code)),
-        error = function(e) {
-          list(
-            error_value = -1,
-            message = capture.output(print(e$message)),
-            error_status = TRUE
-          )
-        }
-      )
-    })
+
+    tryCatch(
+      eval(parse(text = openAI_response()$cmd)),
+      error = function(e) {
+        list(
+          error_value = -1,
+          message = capture.output(print(e$message)),
+          error_status = TRUE
+        )
+      }
+    )
 
   })
 
@@ -785,54 +664,24 @@ app_server <- function(input, output, session) {
   output$console_output <- renderText({
     req(openAI_response()$cmd)
     out <- capture.output(
-        eval(parse(text = r_code$code))
+        eval(parse(text = openAI_response()$cmd))
     )
     paste(out, collapse = "\n")
   })
 
   output$result_plot <- renderPlot({
     req(openAI_response()$cmd)
-      withProgress(message = "Plotting ...", {
-        incProgress(0.4)
-        tryCatch(
-          eval(parse(text = r_code$code)),
-          error = function(e) {
-            list(
-              value = -1,
-              message = capture.output(print(e$message)),
-              error_status = TRUE
-            )
-          }
+
+    tryCatch(
+      eval(parse(text = openAI_response()$cmd)),
+      error = function(e) {
+        list(
+          value = -1,
+          message = capture.output(print(e$message)),
+          error_status = TRUE
         )
-      })
-  })
-
-  output$result_plotly <- plotly::renderPlotly({
-    req(openAI_response()$cmd)
-    req(
-      is_interactive_plot() ||   # natively interactive
-      turned_on(input$make_ggplot_interactive)
-    )
-    withProgress(message = "Plotting ...", {
-      incProgress(0.4)
-      tryCatch(
-        g <- eval(parse(text = r_code$code)),
-        error = function(e) {
-          list(
-            value = -1,
-            message = capture.output(print(e$message)),
-            error_status = TRUE
-          )
-        }
-      )
-
-      # still errors some times, when the returned list is not a plot
-      if(is.character(g) || is.data.frame(g) || is.numeric(g)) {
-        return(NULL)
-      } else {
-        return(g)
       }
-    })
+    )
 
   })
 
@@ -841,73 +690,11 @@ app_server <- function(input, output, session) {
     req(openAI_response()$cmd)
     if(code_error() || input$submit_button == 0) {
       return()
-    } else if (
-      is_interactive_plot() ||   # natively interactive
-      turned_on(input$make_ggplot_interactive) # converted
-    ){
-      plotly::plotlyOutput("result_plotly")
     } else {
       plotOutput("result_plot")
     }
-  })
-
-  # reset to FALSE after each submission
-  observeEvent(input$submit_button, {
-    updateCheckboxInput(
-      session = session,
-      inputId = "make_ggplot_interactive",
-      label = "Make it interactive!",
-      value = FALSE
-    )
-  })
-
-  # remaining issue. Hide when app starts up.
-  observe({
-    # hide it by default
-    shinyjs::hideElement(id = "make_ggplot_interactive")
-    req(openAI_prompt())
-
-    # if  ggplot2, and it is not already an interactive plot, show
-    if(grepl("ggplot", paste(openAI_response()$cmd, collapse = " ")) &&
-      !is_interactive_plot()
-    ) {
-    shinyjs::showElement(id = "make_ggplot_interactive")
-    }
-  })
-
-  is_interactive_plot <- reactive({
-    # only true if the plot is interactive, natively.
-    req(input$submit_button)
-    if(
-      grepl(
-        "plotly|plot_ly|ggplotly",
-        paste(openAI_response()$cmd, collapse = " ")
-      )
-    ) {
-      return(TRUE)
-    } else {
-      return(FALSE)
-    }
-  })
-
-  output$tips_interactive <- renderUI({
-    req(input$submit_button)
-    req(openAI_response()$cmd)
-    req(openAI_prompt())
-    if(is_interactive_plot() ||   # natively interactive
-      turned_on (input$make_ggplot_interactive)
-     ) {
-      tagList(
-        p("Interactive plot. Mouse over to see values. Select a region to zoom. 
-        Click on the legends to deselect a group. 
-        Double click a category to hide all others. 
-        Use the menu on the top right for other functions."
-        )
-      )
-    }
 
   })
-
 
   # Error when run the generated code?
   code_error <- reactive({
@@ -917,12 +704,11 @@ app_server <- function(input, output, session) {
 
     error_status <- FALSE
 
-    # if error returns true, otherwise 
+    # if error returns true, otherwise
     #  that slot does not exist, returning false.
     # or be NULL
     try(  # if you do not 'try', the entire app quits! :-)
       if (is.list(run_result())) {
-        req(!is.null(names(run_result())[1]))
         if (names(run_result())[1] == "error_value") {
           error_status <- TRUE
         }
@@ -962,16 +748,14 @@ app_server <- function(input, output, session) {
     # otherwise built-in data is unavailable when running from R package.
     library(tidyverse)
 
-    
+
     if(input$select_data == uploaded_data) {
       eval(parse(text = paste0("df <- user_data()$df")))
-    } else if(input$select_data == no_data){
-      df = NULL #as.data.frame("No data selected or uploaded.")
     } else {
       eval(parse(text = paste0("df <- ", input$select_data)))
     }
     DT::datatable(
-      df, 
+      df,
       options = list(
         lengthMenu = c(5, 20, 50, 100),
         pageLength = 20,
@@ -984,7 +768,7 @@ app_server <- function(input, output, session) {
   )
 
   #____________________________________________________________________________
-  # Logs and Reports
+  # Logs and Reports --------------------------------------------------------
   #____________________________________________________________________________
 
   output$session_info <- renderUI({
@@ -1013,10 +797,10 @@ app_server <- function(input, output, session) {
       Rmd_script <- paste0(
         Rmd_script,
         # Get the data from the params list-----------
-        "\n\nDeveloped by [Steven Ge](https://twitter.com/StevenXGe) using 
-        API access (via the 
+        "\n\nDeveloped by [Steven Ge](https://twitter.com/StevenXGe) using
+        API access (via the
         [openai](https://cran.rstudio.com/web/packages/openai/index.html)
-        package ) to 
+        package ) to
         [OpenAI's](https://cran.rstudio.com/web/packages/openai/index.html) \"",
         language_model,
         "\" model.",
@@ -1075,8 +859,8 @@ app_server <- function(input, output, session) {
             "\n|",
             pre_text,
             "|",
-            "Use the ", 
-            input$select_data, 
+            "Use the ",
+            input$select_data,
             " data frame. "
           ),
           "",
@@ -1109,10 +893,6 @@ app_server <- function(input, output, session) {
     cmd <- openAI_response()$cmd
     if(input$select_data == uploaded_data) {
       cmd <- cmd[-1]
-    }
-
-    if(input$continue) {
-      cmd <- c(r_code$cmd, cmd)
     }
 
     # Add R code
@@ -1276,7 +1056,7 @@ output$rmd_chuck_output <- renderText({
 
 #______________________________________________________________________________
 #
-#  Server rebooting every 2 hours; this gives a warning
+#  Server rebooting every 2 hours; this gives a warning             ----------
 #______________________________________________________________________________
 
   # Initialize the timer, 180 seconds
@@ -1305,14 +1085,14 @@ output$rmd_chuck_output <- renderText({
     #rebot at 7:56, 15:56, 23:56 ...
     if (
       time_var()$min >= 56 &&
-      time_var()$hr %% 24 == 23 &&  # time_var()$hr %% 8 == 7 &&
+      time_var()$hr %% 2 == 1 &&  # time_var()$hr %% 8 == 7 &&
       file.exists(on_server)
       ) {
       h4(
         paste(
           lubridate::seconds_to_period(timer()),
-          ": server reboots at midnight UTC. ",
-          " Download your files. Refresh at the top of the hr."
+          ": server reboots every 2hrs at the top of the hour. ",
+          " Download your files."
         ),
         style = "color:red"
       )
@@ -1322,7 +1102,7 @@ output$rmd_chuck_output <- renderText({
 
 #______________________________________________________________________________
 #
-#  Q and A
+#  Q and A                -----------------------------------------------------
 #______________________________________________________________________________
   # load demo data when clicked
   observe({
@@ -1339,7 +1119,7 @@ output$rmd_chuck_output <- renderText({
         session,
         "ask_question",
         value = "",
-        placeholder = "Ask RTutor anything statistics. See examples. Voice naration can be enabled in Settings."
+        placeholder = "Ask RTutor anything statistics. See examples. For voice, say \" Hey Cox\""
       )
     }
   })
@@ -1349,7 +1129,7 @@ output$answer <- renderText({
   req(input$ask_button)
 
   isolate({
-    req(input$ask_question) 
+    req(input$ask_question)
 
     #----------------------------Prep question
     txt <- input$ask_question
@@ -1359,7 +1139,7 @@ output$answer <- renderText({
       txt <- substr(txt, 1, 280)
     }
 
-    # If the last character is not a stop, add it. 
+    # If the last character is not a stop, add it.
     # Otherwise, GPT3 will add a sentence.
 
     # The following 5 lines were generated by ChatGPT!!!!!
@@ -1370,7 +1150,7 @@ output$answer <- renderText({
     }
 
     prepared_request <- paste(
-      "If the next question is not related to statistics or data science 
+      "If the next question is not related to statistics or data science
        say 'Statistics only!' ",
       txt
     )
@@ -1388,8 +1168,8 @@ output$answer <- renderText({
 
     # Send to openAI
     tryCatch(
-      response <- openai::create_completion(
-        engine_id = language_model,
+      response = openai::create_completion(
+        model = language_model,
         prompt = prepared_request,
         openai_api_key = api_key_session()$api_key,
         max_tokens = 200,
@@ -1412,7 +1192,7 @@ output$answer <- renderText({
 
 
     error_api <- FALSE
-    # if error returns true, otherwise 
+    # if error returns true, otherwise
     #  that slot does not exist, returning false.
     # or be NULL
     error_api <- tryCatch(

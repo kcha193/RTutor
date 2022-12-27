@@ -1,0 +1,13 @@
+name: RTutor
+title: RTutor
+username:
+account: kcha193
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 7938580
+bundleId: 6669475
+url: https://kcha193.shinyapps.io/RTutor/
+when: 1671851648.13446
+lastSyncTime: 1671851648.13449
+asMultiple: FALSE
+asStatic: FALSE

@@ -16,9 +16,7 @@ Imports:
     gridExtra,
     openai,
     DT,
-    shinybusy,
-    shinyjs,
-    plotly
+    shinybusy
 Remotes:
     github::jcrodriguez1989/heyshiny
 Depends:
