@@ -156,6 +156,7 @@ app_server <- function(input, output, session) {
              conservative and well-defined solutions,
              but less variety when the same
             request is repeated.
+
             "),
           )
         ),
@@ -197,7 +198,6 @@ app_server <- function(input, output, session) {
         hr(),
         textOutput("session_api_source")
 
-    ))
   })
 
   # uploaded data
@@ -579,6 +579,7 @@ app_server <- function(input, output, session) {
                   value = res, width = "600px",
                   rows = strsplit(res,"\n", fixed = TRUE) |>
                                 unlist() |> length())
+
   })
 
 
@@ -609,6 +610,7 @@ app_server <- function(input, output, session) {
       value = FALSE
     )
   })
+
 
 
   # output$openAI <- renderText({
@@ -647,6 +649,7 @@ app_server <- function(input, output, session) {
       return("OpenAI charges 2¢ per 10k tokens/words
       from our account. Heavy users
       please use your own account (below)."
+
       )
     } else {
     #req(openAI_response()$cmd)
@@ -696,6 +699,7 @@ app_server <- function(input, output, session) {
   # a base R plot is generated.
   run_result <- reactive({
 
+
     req(openAI_response()$cmd)
 
     tryCatch(
@@ -708,6 +712,7 @@ app_server <- function(input, output, session) {
         )
       }
     )
+
 
   })
 
@@ -723,6 +728,7 @@ app_server <- function(input, output, session) {
   output$result_plot <- renderPlot({
     req(openAI_response()$cmd)
 
+
     tryCatch(
       eval(parse(text = openAI_response()$cmd)),
       error = function(e) {
@@ -731,6 +737,7 @@ app_server <- function(input, output, session) {
           message = capture.output(print(e$message)),
           error_status = TRUE
         )
+
 
       }
     )

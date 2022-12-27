@@ -333,7 +333,6 @@ fluidPage(
           who took one semester of statistics and R. You send the
           intern emails with instructions and he/she sends
           back code and results. The intern is not experienced,
-
           thus error-prone, but is hard working. Thanks to AI, this
            intern is lightning fast and nearly free."),
 
